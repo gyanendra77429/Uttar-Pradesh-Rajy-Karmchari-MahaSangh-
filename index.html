@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f2a5c">
+<title>उत्तर प्रदेश राज्य कर्मचारी महासंघ – इटावा</title>
+<meta name="description" content="Uttar Pradesh Rajya Karmchari Mahasangh, Etawah – कर्मचारी हित, अधिकार और सम्मान के लिए">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<!-- script.js head me hai taaki broken-image fallback turant kaam kare -->
+<script src="script.js"></script>
+</head>
+<body data-page="home">
+<div class="tricolor"></div>
+
+<!-- ===== HEADER ===== -->
+<header class="sticky top-0 z-40 bg-white shadow">
+  <div class="max-w-6xl mx-auto px-4 py-2 flex items-center gap-3">
+    <img src="images/logo.png" alt="महासंघ लोगो" class="w-12 h-12 rounded-full object-contain">
+    <div class="flex-1 min-w-0">
+      <h1 class="font-bold text-blue-900 leading-tight text-sm sm:text-lg">उत्तर प्रदेश राज्य कर्मचारी महासंघ – इटावा</h1>
+      <p class="text-[10px] sm:text-xs text-slate-500">Uttar Pradesh Rajya Karmchari Mahasangh - Etawah</p>
+      <p class="text-[11px] sm:text-xs text-orange-600 font-semibold">राष्ट्रहित सर्वोपरि, कर्मचारी हित हमारा संकल्प</p>
+    </div>
+    <button id="menuBtn" class="lg:hidden text-2xl px-2" aria-label="मेनू खोलें">☰</button>
+  </div>
+  <nav id="nav" class="hidden lg:block border-t bg-white">
+    <div class="max-w-6xl mx-auto px-4 py-2 flex flex-col lg:flex-row gap-2 lg:gap-6 text-sm font-semibold text-slate-700">
+      <a href="#about">परिचय</a><a href="#team">पदाधिकारी</a><a href="#demands">माँगें</a>
+      <a href="#gallery">गैलरी</a><a href="#downloads">डाउनलोड</a><a href="#form">समस्या फॉर्म</a><a href="#contact">संपर्क</a>
+    </div>
+  </nav>
+</header>
+
+<!-- ===== NEWS TICKER ===== -->
+<div class="bg-blue-950 text-white flex items-center text-sm">
+  <span class="bg-orange-500 font-bold px-3 py-2 shrink-0">📢 सूचना</span>
+  <div class="ticker flex-1 py-2"><div id="ticker" class="ticker-track"></div></div>
+</div>
+
+<!-- ===== HERO ===== -->
+<section class="hero-bg text-white">
+  <div class="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-8 items-center">
+    <div class="order-1 md:order-2 flex justify-center">
+      <img id="hPhoto" alt="जिला अध्यक्ष" class="w-48 h-48 sm:w-64 sm:h-64 rounded-full object-cover border-4 border-orange-400 shadow-2xl">
+    </div>
+    <div class="order-2 md:order-1 text-center md:text-left">
+      <p class="text-orange-300 font-semibold">आपका हार्दिक स्वागत है</p>
+      <h2 id="hName" class="text-3xl sm:text-4xl font-bold mt-1"></h2>
+      <p id="hTitle" class="text-blue-200 mt-1 font-semibold"></p>
+      <p id="hMsg" class="mt-4 text-blue-100 leading-relaxed"></p>
+      <div class="mt-6 flex gap-3 justify-center md:justify-start flex-wrap">
+        <a href="#form" class="btn">अपनी समस्या दर्ज करें</a>
+        <a href="#contact" class="btn-ghost">संपर्क करें</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ABOUT (apna asli itihas/vision yahan likhein) ===== -->
+<section id="about" class="max-w-6xl mx-auto px-4 py-10">
+  <h2 class="sec-title">संघ का परिचय</h2>
+  <div class="grid md:grid-cols-2 gap-5">
+    <div class="card p-5">
+      <h3 class="font-bold text-lg text-blue-900 mb-2">📜 हमारा इतिहास</h3>
+      <p class="leading-relaxed text-slate-600">उत्तर प्रदेश राज्य कर्मचारी महासंघ प्रदेश के राज्य कर्मचारियों का प्रतिनिधि संगठन है। इटावा जनपद इकाई कर्मचारियों के हित, अधिकार और सम्मान के लिए निरंतर कार्य करती आ रही है। <!-- यहाँ संघ की स्थापना और उपलब्धियाँ लिखें --></p>
+    </div>
+    <div class="card p-5">
+      <h3 class="font-bold text-lg text-blue-900 mb-2">🎯 जिला अध्यक्ष का विज़न</h3>
+      <p class="leading-relaxed text-slate-600">हर कर्मचारी की आवाज़ शासन तक पहुँचे, समस्याओं का समय पर समाधान हो और संगठन पारदर्शिता, एकता तथा सेवा-भाव के साथ आगे बढ़े। <!-- यहाँ अध्यक्ष जी का विज़न लिखें --></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== EXECUTIVE BODY ===== -->
+<section id="team" class="bg-white py-10">
+  <div class="max-w-6xl mx-auto px-4">
+    <h2 class="sec-title">जनपद कार्यकारिणी</h2>
+    <div id="teamGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5"></div>
+  </div>
+</section>
+
+<!-- ===== DEMANDS ===== -->
+<section id="demands" class="max-w-6xl mx-auto px-4 py-10">
+  <h2 class="sec-title">कर्मचारियों की प्रमुख माँगें</h2>
+  <div id="demandGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</section>
+
+<!-- ===== GALLERY ===== -->
+<section id="gallery" class="bg-white py-10">
+  <div class="max-w-6xl mx-auto px-4">
+    <h2 class="sec-title">फोटो गैलरी</h2>
+    <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+  </div>
+</section>
+
+<!-- ===== DOWNLOADS ===== -->
+<section id="downloads" class="max-w-6xl mx-auto px-4 py-10">
+  <h2 class="sec-title">महत्वपूर्ण लिंक व डाउनलोड</h2>
+  <div id="dlList" class="grid sm:grid-cols-2 gap-3"></div>
+</section>
+
+<!-- ===== GRIEVANCE FORM ===== -->
+<section id="form" class="bg-white py-10">
+  <div class="max-w-xl mx-auto px-4">
+    <h2 class="sec-title">कर्मचारी समस्या फॉर्म</h2>
+    <form id="gform" class="card p-5 space-y-3 border">
+      <input class="input" name="name" placeholder="पूरा नाम *" required>
+      <select class="input" name="dept" required>
+        <option value="">विभाग चुनें *</option>
+        <option>शिक्षा</option><option>स्वास्थ्य</option><option>राजस्व</option><option>पंचायती राज</option>
+        <option>कृषि</option><option>लोक निर्माण विभाग</option><option>विद्युत</option><option>परिवहन</option><option>अन्य</option>
+      </select>
+      <input class="input" name="empId" placeholder="कर्मचारी ID *" required>
+      <input class="input" name="mobile" type="tel" inputmode="numeric" maxlength="10" placeholder="मोबाइल नंबर (10 अंक) *" required>
+      <textarea class="input" name="issue" rows="4" placeholder="अपनी समस्या / माँग लिखें *" required></textarea>
+      <button id="gBtn" class="btn w-full">समस्या जमा करें</button>
+    </form>
+  </div>
+</section>
+
+<!-- ===== CONTACT ===== -->
+<section id="contact" class="max-w-6xl mx-auto px-4 py-10">
+  <h2 class="sec-title">कार्यालय व संपर्क</h2>
+  <div class="card p-5 space-y-2 max-w-xl mx-auto">
+    <div id="contactBox" class="space-y-2"></div>
+    <div id="social" class="flex gap-2 flex-wrap pt-2 text-blue-800"></div>
+  </div>
+</section>
+
+<footer class="bg-blue-950 text-blue-200 text-center text-xs py-5 px-4">
+  © <span id="yr"></span> उत्तर प्रदेश राज्य कर्मचारी महासंघ, इटावा • जय हिंद 🇮🇳
+</footer>
+
+<!-- Lightbox: gallery photo bada dekhne ke liye -->
+<div id="lb" class="hidden fixed inset-0 z-50 bg-black/90 items-center justify-center p-4 cursor-zoom-out">
+  <img id="lbImg" class="max-w-full max-h-full rounded-lg" alt="">
+</div>
+</body>
+</html>
