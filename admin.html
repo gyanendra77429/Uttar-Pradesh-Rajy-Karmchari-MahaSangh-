@@ -35,6 +35,44 @@
       ⚠️ Firebase जुड़ा नहीं है — डेटा सिर्फ इसी ब्राउज़र में सेव होगा, दूसरे यूज़र्स को नहीं दिखेगा। <b>script.js</b> में FIREBASE की details भरें।
     </div>
 
+    <!-- Logo + Jila Adhyaksh -->
+    <section class="card p-4">
+      <h2 class="font-bold text-blue-900 mb-3">🏠 लोगो व जिला अध्यक्ष</h2>
+      <form id="siteForm" class="space-y-3">
+        <div class="flex items-center gap-3">
+          <img id="logoPrev" alt="लोगो" class="w-16 h-16 rounded-full object-contain bg-slate-100 shrink-0">
+          <label class="flex-1 text-sm font-semibold">वेबसाइट का लोगो<input id="logoFile" type="file" accept="image/*" class="input mt-1"></label>
+        </div>
+        <div class="flex items-center gap-3">
+          <img id="photoPrev" alt="अध्यक्ष" class="w-16 h-16 rounded-full object-cover bg-slate-100 shrink-0">
+          <label class="flex-1 text-sm font-semibold">जिला अध्यक्ष की फोटो<input id="photoFile" type="file" accept="image/*" class="input mt-1"></label>
+        </div>
+        <input class="input" name="name" placeholder="जिला अध्यक्ष का नाम" required>
+        <input class="input" name="title" placeholder="पद (जैसे: जिला अध्यक्ष)">
+        <textarea class="input" name="msg" rows="3" placeholder="स्वागत संदेश"></textarea>
+        <button class="btn w-full">सेव करें</button>
+      </form>
+    </section>
+
+    <!-- Padadhikari -->
+    <section class="card p-4">
+      <h2 class="font-bold text-blue-900 mb-3">👥 पदाधिकारी (जोड़ें / बदलें / हटाएँ)</h2>
+      <form id="teamForm" class="space-y-2">
+        <div class="flex items-center gap-3">
+          <img id="tPrev" alt="" class="w-16 h-16 rounded-full object-cover bg-slate-100 shrink-0">
+          <input id="tFile" type="file" accept="image/*" class="input">
+        </div>
+        <input class="input" name="name" placeholder="नाम" required>
+        <input class="input" name="role" list="roles" placeholder="पद (जैसे: जिला महामंत्री)" required>
+        <datalist id="roles"><option value="जिला उपाध्यक्ष"><option value="जिला महामंत्री"><option value="जिला कोषाध्यक्ष"><option value="जिला मंत्री"><option value="संगठन मंत्री"><option value="प्रचार मंत्री"></datalist>
+        <div class="flex gap-2">
+          <button id="tBtn" class="btn flex-1">पदाधिकारी जोड़ें</button>
+          <button type="button" id="tCancel" class="btn-ghost hidden text-slate-600">रद्द करें</button>
+        </div>
+      </form>
+      <div id="teamList" class="mt-3"></div>
+    </section>
+
     <!-- News -->
     <section class="card p-4">
       <h2 class="font-bold text-blue-900 mb-3">📢 ताज़ा सूचना</h2>
