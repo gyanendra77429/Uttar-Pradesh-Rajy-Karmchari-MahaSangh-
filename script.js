@@ -32,7 +32,7 @@ const CONFIG = {
   ],
   contact: {
     address: "जिला कार्यालय, उत्तर प्रदेश राज्य कर्मचारी महासंघ, इटावा (उ.प्र.) – 206001",
-    phones: ["9XXXXXXXXX", "9XXXXXXXXX"],
+    phones: ["8273278648", "8273278648"],
     email: "etawah.mahasangh@gmail.com",
     social: { Facebook: "#", WhatsApp: "#", YouTube: "#" }
   },
