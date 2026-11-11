@@ -56,8 +56,12 @@ function toast(m) {
   const t = document.createElement('div');
   t.textContent = m;
   t.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg z-50 text-sm max-w-[90%]';
-  document.body.append(t); setTimeout(() => t.remove(), 3500);
+  document.body.append(t); setTimeout(() => t.remove(), m.length > 40 ? 9000 : 3500);
 }
+
+// Firebase ka asli error dikhane ke liye
+const fail = e => { console.error(e); toast('❌ ' + String((e && e.message) || e).slice(0, 180)); };
+const fbOk = async r => { if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error((j.error && j.error.message) || 'HTTP ' + r.status); } };
 
 /* ---------- 3. Data layer: Firebase Firestore (REST) ya LocalStorage ---------- */
 const FB = CONFIG.FIREBASE, useFB = !!(FB.projectId && FB.apiKey);
@@ -79,7 +83,7 @@ const DB = {
     obj = { ...obj, ts: Date.now() };
     if (useFB) {
       const r = await fetch(`${FB_URL}/${col}?key=${FB.apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(toF(obj)) });
-      if (!r.ok) throw new Error('Firebase error');
+      await fbOk(r);
     } else { const a = ls(col); a.push({ id: 'i' + obj.ts, ...obj }); localStorage.setItem(col, JSON.stringify(a)); }
   },
   async get(col, id) {                    // ek document padhna (jaise settings/site)
@@ -92,7 +96,7 @@ const DB = {
     if (useFB) {
       const m = Object.keys(obj).map(k => 'updateMask.fieldPaths=' + k).join('&');
       const r = await fetch(`${FB_URL}/${col}/${id}?key=${FB.apiKey}&${m}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(toF(obj)) });
-      if (!r.ok) throw new Error('Firebase error');
+      await fbOk(r);
     } else {
       const a = ls(col), i = a.findIndex(x => x.id === id);
       if (i < 0) a.push({ id, ...obj }); else a[i] = { ...a[i], ...obj };
@@ -100,7 +104,7 @@ const DB = {
     }
   },
   async del(col, id) {
-    if (useFB) await fetch(`${FB_URL}/${col}/${id}?key=${FB.apiKey}`, { method: 'DELETE' });
+    if (useFB) await fbOk(await fetch(`${FB_URL}/${col}/${id}?key=${FB.apiKey}`, { method: 'DELETE' }));
     else localStorage.setItem(col, JSON.stringify(ls(col).filter(x => x.id !== id)));
   }
 };
@@ -183,7 +187,7 @@ function initHome() {
     if (!/^[6-9]\d{9}$/.test(d.mobile)) return toast('❌ सही 10 अंकों का मोबाइल नंबर डालें');
     $('#gBtn').disabled = true;
     try { await DB.add('grievances', d); f.reset(); toast('✅ आपकी समस्या दर्ज हो गई'); }
-    catch { toast('❌ जमा नहीं हो सका, दोबारा प्रयास करें'); }
+    catch (err) { fail(err); }
     $('#gBtn').disabled = false;
   };
 }
@@ -215,7 +219,7 @@ function initAdmin() {
   const bind = (id, col) => $(id).onsubmit = async e => {
     e.preventDefault(); const f = e.target;
     try { await DB.add(col, Object.fromEntries(new FormData(f))); f.reset(); toast('✅ जुड़ गया'); loadAdmin(); }
-    catch { toast('❌ त्रुटि, दोबारा प्रयास करें'); }
+    catch (err) { fail(err); }
   };
   bind('#newsForm', 'news'); bind('#galForm', 'gallery');
 
@@ -248,7 +252,7 @@ function initAdmin() {
     const d = Object.fromEntries(new FormData(e.target));
     if (A.pend.logo) d.logo = A.pend.logo;
     if (A.pend.photo) d.photo = A.pend.photo;
-    try { await DB.set('settings', 'site', d); A.pend.logo = A.pend.photo = null; toast('✅ सेव हो गया'); } catch { toast('❌ सेव नहीं हुआ, दोबारा प्रयास करें'); }
+    try { await DB.set('settings', 'site', d); A.pend.logo = A.pend.photo = null; toast('✅ सेव हो गया'); } catch (err) { fail(err); }
   };
 
   // --- Padadhikari: jodna / badalna ---
@@ -264,7 +268,7 @@ function initAdmin() {
       if (A.editId) await DB.set('team', A.editId, d);
       else await DB.add('team', { ...d, photo: d.photo || '', ord: Date.now() });
       teamReset(); toast('✅ सेव हो गया'); loadAdmin();
-    } catch { toast('❌ सेव नहीं हुआ, दोबारा प्रयास करें'); }
+    } catch (err) { fail(err); }
   };
   $('#tCancel').onclick = teamReset;
   document.addEventListener('click', async e => {
