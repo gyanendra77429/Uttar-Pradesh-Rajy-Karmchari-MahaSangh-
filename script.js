@@ -51,7 +51,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&
 // Photo na mile to ye placeholder dikhega
 const PH = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#e2e8f0"/><circle cx="50" cy="38" r="16" fill="#94a3b8"/><path d="M18 90c4-22 20-30 32-30s28 8 32 30z" fill="#94a3b8"/></svg>');
 document.addEventListener('error', e => { const t = e.target; if (t.tagName === 'IMG' && !t.dataset.f) { t.dataset.f = 1; t.src = PH; } }, true);
-const imgTag = (src, cls, alt) => `<img src="${esc(src)}" alt="${esc(alt)}" class="${cls}" loading="lazy">`;
+const imgTag = (src, cls, alt) => `<img src="${esc(src || PH)}" alt="${esc(alt)}" class="${cls}" loading="lazy">`;
 function toast(m) {
   const t = document.createElement('div');
   t.textContent = m;
@@ -73,7 +73,7 @@ const DB = {
       if (useFB) { const j = await (await fetch(`${FB_URL}/${col}?key=${FB.apiKey}&pageSize=300`)).json(); rows = (j.documents || []).map(fromF); }
       else rows = ls(col);
     } catch (e) { console.error(e); rows = []; }
-    return rows.sort((a, b) => (b.ts || 0) - (a.ts || 0));   // naya pehle
+    return rows.sort(col === 'team' ? (a, b) => (a.ord || 0) - (b.ord || 0) : (a, b) => (b.ts || 0) - (a.ts || 0));  // team: ord se, baaki: naya pehle
   },
   async add(col, obj) {
     obj = { ...obj, ts: Date.now() };
@@ -82,12 +82,51 @@ const DB = {
       if (!r.ok) throw new Error('Firebase error');
     } else { const a = ls(col); a.push({ id: 'i' + obj.ts, ...obj }); localStorage.setItem(col, JSON.stringify(a)); }
   },
+  async get(col, id) {                    // ek document padhna (jaise settings/site)
+    try {
+      if (useFB) { const j = await (await fetch(`${FB_URL}/${col}/${id}?key=${FB.apiKey}`)).json(); return j.fields ? fromF(j) : {}; }
+      return ls(col).find(x => x.id === id) || {};
+    } catch (e) { return {}; }
+  },
+  async set(col, id, obj) {               // banao ya sirf diye gaye fields badlo (merge)
+    if (useFB) {
+      const m = Object.keys(obj).map(k => 'updateMask.fieldPaths=' + k).join('&');
+      const r = await fetch(`${FB_URL}/${col}/${id}?key=${FB.apiKey}&${m}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(toF(obj)) });
+      if (!r.ok) throw new Error('Firebase error');
+    } else {
+      const a = ls(col), i = a.findIndex(x => x.id === id);
+      if (i < 0) a.push({ id, ...obj }); else a[i] = { ...a[i], ...obj };
+      localStorage.setItem(col, JSON.stringify(a));
+    }
+  },
   async del(col, id) {
     if (useFB) await fetch(`${FB_URL}/${col}/${id}?key=${FB.apiKey}`, { method: 'DELETE' });
     else localStorage.setItem(col, JSON.stringify(ls(col).filter(x => x.id !== id)));
   }
 };
 const fmtDate = ts => new Date(+ts).toLocaleDateString('hi-IN');
+/* Photo ko chhota (resize) karke text me badalna — Firestore me seedha save hoti hai, Storage ki zaroorat nahi */
+function readImg(file, max, type) {
+  return new Promise((res, rej) => {
+    const im = new Image(), fr = new FileReader();
+    fr.onload = () => { im.onload = () => {
+      const k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      const x = c.getContext('2d');
+      if (type === 'image/jpeg') { x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); }
+      x.drawImage(im, 0, 0, c.width, c.height);
+      res(c.toDataURL(type, 0.82));
+    }; im.onerror = rej; im.src = fr.result; };
+    fr.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+// Logo + Adhyaksh ki jaankari: admin panel ki saved value, warna CONFIG ka default
+async function getSite() {
+  const s = { ...CONFIG.adhyaksh };
+  Object.entries(await DB.get('settings', 'site')).forEach(([k, v]) => { if (v) s[k] = v; });
+  return s;
+}
+const A = { team: [], pend: {}, editId: null };   // admin state: pend = nayi chuni gayi photos
 
 /* ---------- 4. PUBLIC WEBSITE (index.html) ---------- */
 async function loadNews() {
@@ -100,14 +139,20 @@ async function loadGallery() {
     `<figure class="relative overflow-hidden rounded-xl cursor-zoom-in">${imgTag(x.url, 'w-full h-36 sm:h-52 object-cover', x.caption)}
      <figcaption class="absolute bottom-0 inset-x-0 bg-black/55 text-white text-xs p-1.5">${esc(x.caption)}</figcaption></figure>`).join('');
 }
-function initHome() {
-  const a = CONFIG.adhyaksh, c = CONFIG.contact;
-  $('#hPhoto').src = a.photo; $('#hName').textContent = a.name;
-  $('#hTitle').textContent = a.title + ' – उ.प्र. राज्य कर्मचारी महासंघ, इटावा'; $('#hMsg').textContent = a.msg;
-
-  $('#teamGrid').innerHTML = CONFIG.team.map(m => `<div class="card p-3 text-center">
+async function loadSite() {
+  const s = await getSite();
+  $('#hPhoto').src = s.photo || PH; $('#hName').textContent = s.name;
+  $('#hTitle').textContent = s.title + ' – उ.प्र. राज्य कर्मचारी महासंघ, इटावा'; $('#hMsg').textContent = s.msg;
+  if (s.logo) $('#logo').src = s.logo;
+}
+async function loadTeam() {   // admin panel ki list; khaali ho to CONFIG.team
+  const t = await DB.list('team');
+  $('#teamGrid').innerHTML = (t.length ? t : CONFIG.team).map(m => `<div class="card p-3 text-center">
     ${imgTag(m.photo, 'w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-full object-cover', m.name)}
     <h3 class="mt-2 font-bold text-sm sm:text-base">${esc(m.name)}</h3><p class="text-xs sm:text-sm text-orange-600 font-semibold">${esc(m.role)}</p></div>`).join('');
+}
+function initHome() {
+  const c = CONFIG.contact;
 
   $('#demandGrid').innerHTML = CONFIG.demands.map(d => `<div class="card p-4 border-l-4 border-orange-500">
     <div class="text-2xl">${d.i}</div><h3 class="font-bold text-blue-900 mt-1">${esc(d.t)}</h3><p class="text-sm text-slate-600 mt-1">${esc(d.d)}</p></div>`).join('');
@@ -121,7 +166,7 @@ function initHome() {
   $('#social').innerHTML = Object.entries(c.social).map(([k, v]) => `<a class="btn-ghost text-sm" href="${esc(v)}" target="_blank" rel="noopener">${esc(k)}</a>`).join('');
   $('#yr').textContent = new Date().getFullYear();
 
-  loadNews(); loadGallery();
+  loadSite(); loadTeam(); loadNews(); loadGallery();
 
   // Mobile menu
   $('#menuBtn').onclick = () => $('#nav').classList.toggle('hidden');
@@ -145,7 +190,7 @@ function initHome() {
 
 /* ---------- 5. ADMIN PANEL (admin.html) ---------- */
 async function loadAdmin() {
-  const [n, g, r] = await Promise.all(['news', 'gallery', 'grievances'].map(c => DB.list(c)));
+  const [n, g, r, t] = await Promise.all(['news', 'gallery', 'grievances', 'team'].map(c => DB.list(c))); A.team = t;
   const row = (col, x, html) => `<div class="flex gap-2 items-start border-b py-2">${html}<button data-del="${col}|${esc(x.id)}" class="text-red-600 px-2" aria-label="हटाएँ">🗑</button></div>`;
   const empty = '<p class="text-sm text-slate-500">अभी कुछ नहीं है।</p>';
   $('#newsList').innerHTML = n.map(x => row('news', x, `<p class="flex-1 text-sm">${esc(x.text)}</p>`)).join('') || empty;
@@ -153,12 +198,16 @@ async function loadAdmin() {
   $('#gList').innerHTML = r.map(x => row('grievances', x, `<div class="flex-1 text-sm"><b>${esc(x.name)}</b> • ${esc(x.dept)} • ID: ${esc(x.empId)}<br>
     📞 <a class="text-blue-700" href="tel:${esc(x.mobile)}">${esc(x.mobile)}</a> • ${fmtDate(x.ts)}
     <p class="mt-1 bg-slate-50 p-2 rounded">${esc(x.issue)}</p></div>`)).join('') || empty;
+  $('#teamList').innerHTML = t.map(x => row('team', x, `${imgTag(x.photo, 'w-14 h-14 rounded-full object-cover', x.name)}
+    <div class="flex-1 text-sm"><b>${esc(x.name)}</b><br><span class="text-orange-600">${esc(x.role)}</span></div>
+    <button data-edit="${esc(x.id)}" class="px-2" aria-label="बदलें">✏️</button>`)).join('')
+    || '<button id="seed" class="btn-ghost text-sm text-blue-800">⬇ डिफ़ॉल्ट पदाधिकारी लोड करें (फिर नाम/फोटो बदलें)</button>';
   $('#gCount').textContent = r.length;
 }
 function initAdmin() {
   // ⚠️ Ye password client-side hai: sirf basic roka-tok, bank-grade security nahi.
   const ok = () => sessionStorage.getItem('adm') === '1';
-  const show = () => { $('#login').classList.toggle('hidden', ok()); $('#panel').classList.toggle('hidden', !ok()); if (ok()) loadAdmin(); };
+  const show = () => { $('#login').classList.toggle('hidden', ok()); $('#panel').classList.toggle('hidden', !ok()); if (ok()) { loadAdmin(); fillSite(); } };
   $('#loginForm').onsubmit = e => { e.preventDefault(); if ($('#pw').value === CONFIG.ADMIN_PASSWORD) { sessionStorage.setItem('adm', '1'); show(); } else toast('❌ गलत पासवर्ड'); };
   $('#logout').onclick = () => { sessionStorage.removeItem('adm'); show(); };
   $('#warn').classList.toggle('hidden', useFB);
@@ -186,7 +235,60 @@ function initAdmin() {
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     a.download = 'grievances.csv'; a.click();
   };
+  // --- Logo + Adhyaksh ---
+  const pick = (fileId, prevId, key, max, type) => $(fileId).onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { A.pend[key] = await readImg(f, max, type); $(prevId).src = A.pend[key]; } catch { toast('❌ फोटो पढ़ी नहीं जा सकी'); }
+  };
+  pick('#logoFile', '#logoPrev', 'logo', 300, 'image/png');
+  pick('#photoFile', '#photoPrev', 'photo', 500, 'image/jpeg');
+  pick('#tFile', '#tPrev', 'tphoto', 400, 'image/jpeg');
+  $('#siteForm').onsubmit = async e => {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.target));
+    if (A.pend.logo) d.logo = A.pend.logo;
+    if (A.pend.photo) d.photo = A.pend.photo;
+    try { await DB.set('settings', 'site', d); A.pend.logo = A.pend.photo = null; toast('✅ सेव हो गया'); } catch { toast('❌ सेव नहीं हुआ, दोबारा प्रयास करें'); }
+  };
+
+  // --- Padadhikari: jodna / badalna ---
+  const teamReset = () => {
+    A.editId = null; A.pend.tphoto = null; $('#teamForm').reset(); $('#tPrev').src = PH;
+    $('#tBtn').textContent = 'पदाधिकारी जोड़ें'; $('#tCancel').classList.add('hidden');
+  };
+  $('#teamForm').onsubmit = async e => {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.target));
+    if (A.pend.tphoto) d.photo = A.pend.tphoto;
+    try {
+      if (A.editId) await DB.set('team', A.editId, d);
+      else await DB.add('team', { ...d, photo: d.photo || '', ord: Date.now() });
+      teamReset(); toast('✅ सेव हो गया'); loadAdmin();
+    } catch { toast('❌ सेव नहीं हुआ, दोबारा प्रयास करें'); }
+  };
+  $('#tCancel').onclick = teamReset;
+  document.addEventListener('click', async e => {
+    if (!ok()) return;
+    const b = e.target.closest('[data-edit]');
+    if (b) {   // ✏️ dabane par form me purani details bharna
+      const m = A.team.find(x => x.id === b.dataset.edit), f = $('#teamForm').elements;
+      A.editId = m.id; A.pend.tphoto = null; $('#tFile').value = '';
+      f.name.value = m.name; f.role.value = m.role; $('#tPrev').src = m.photo || PH;
+      $('#tBtn').textContent = 'अपडेट करें'; $('#tCancel').classList.remove('hidden');
+      $('#teamForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (e.target.id === 'seed') {   // default list ko database me daalna
+      e.target.disabled = true;
+      for (const [i, m] of CONFIG.team.entries()) await DB.add('team', { ...m, ord: i + 1 });
+      loadAdmin();
+    }
+  });
   show();
+}
+async function fillSite() {
+  const s = await getSite(), f = $('#siteForm').elements;
+  f.name.value = s.name; f.title.value = s.title; f.msg.value = s.msg;
+  $('#photoPrev').src = s.photo || PH; $('#logoPrev').src = s.logo || 'images/logo.png'; $('#tPrev').src = PH;
 }
 
 /* ---------- 6. Start ---------- */
