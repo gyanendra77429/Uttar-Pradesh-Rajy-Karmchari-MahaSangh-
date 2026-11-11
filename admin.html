@@ -86,9 +86,9 @@
     <!-- Gallery -->
     <section class="card p-4">
       <h2 class="font-bold text-blue-900 mb-1">🖼️ गैलरी</h2>
-      <p class="text-xs text-slate-500 mb-3">फोटो को repo के <b>images/</b> फोल्डर में डालकर <b>images/meeting1.jpg</b> लिखें, या कोई भी इमेज लिंक (URL) डालें।</p>
+      <p class="text-xs text-slate-500 mb-3">फोन/कंप्यूटर से एक या कई फोटो एक साथ चुनें। फोटो अपने आप छोटी होकर सेव होती हैं।</p>
       <form id="galForm" class="space-y-2">
-        <input class="input" name="url" placeholder="फोटो का पाथ / URL" required>
+        <input id="gFile" type="file" accept="image/*" multiple class="input" required>
         <input class="input" name="caption" placeholder="कैप्शन (जैसे: जिला बैठक, नवंबर 2026)" required>
         <button class="btn w-full">फोटो जोड़ें</button>
       </form>
