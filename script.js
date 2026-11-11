@@ -32,9 +32,9 @@ const CONFIG = {
   ],
   contact: {
     address: "जिला कार्यालय, उत्तर प्रदेश राज्य कर्मचारी महासंघ, इटावा (उ.प्र.) – 206001",
-    phones: ["8273278648", "8273278648"],
-    email:  [" dheeruetw@gmail.com",
-    social: { Facebook: "#", WhatsApp: "#", YouTube: "#" }
+    phones: ["8273278648"],
+    email: "dheeruetw@gmail.com",
+    social: { WhatsApp: "https://wa.me/918273278648" }   // Facebook/YouTube ho to: Facebook: "https://...", YouTube: "https://..." jodein
   },
   defaultNews: [{ text: "जिला कार्यकारिणी की आगामी बैठक की सूचना यहाँ दिखेगी — एडमिन पैनल से बदलें।" }],
   defaultGallery: [
@@ -139,7 +139,7 @@ async function loadNews() {
 }
 async function loadGallery() {
   const g = await DB.list('gallery');
-  $('#galleryGrid').innerHTML = (g.length ? g : CONFIG.defaultGallery).map(x =>
+  $('#galleryGrid').innerHTML = (g.length ? g.slice(0, 24) : CONFIG.defaultGallery).map(x =>
     `<figure class="relative overflow-hidden rounded-xl cursor-zoom-in">${imgTag(x.url, 'w-full h-36 sm:h-52 object-cover', x.caption)}
      <figcaption class="absolute bottom-0 inset-x-0 bg-black/55 text-white text-xs p-1.5">${esc(x.caption)}</figcaption></figure>`).join('');
 }
@@ -221,7 +221,21 @@ function initAdmin() {
     try { await DB.add(col, Object.fromEntries(new FormData(f))); f.reset(); toast('✅ जुड़ गया'); loadAdmin(); }
     catch (err) { fail(err); }
   };
-  bind('#newsForm', 'news'); bind('#galForm', 'gallery');
+  bind('#newsForm', 'news');
+  // Gallery: ek ya kai photo chunkar upload (resize hokar Firestore me save)
+  $('#galForm').onsubmit = async e => {
+    e.preventDefault();
+    const f = e.target, files = [...$('#gFile').files], cap = f.elements.caption.value, btn = f.querySelector('button');
+    btn.disabled = true;
+    try {
+      for (const [i, file] of files.entries()) {
+        btn.textContent = `अपलोड हो रही है ${i + 1}/${files.length}…`;
+        await DB.add('gallery', { url: await readImg(file, 800, 'image/jpeg'), caption: cap });
+      }
+      f.reset(); toast(`✅ ${files.length} फोटो जुड़ गईं`); loadAdmin();
+    } catch (err) { fail(err); }
+    btn.disabled = false; btn.textContent = 'फोटो जोड़ें';
+  };
 
   // Delete (event delegation)
   document.addEventListener('click', async e => {
